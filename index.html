@@ -1,141 +1,35 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Felipe | Strategic Branding</title>
-    <meta name="description" content="Marcas com alma, design com estratégia." />
-    
-    <!-- Tailwind CSS (CDN for simplicity) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-      :root {
-        --bg: #F3EFF9;
-        --text-primary: #312E35;
-        --text-secondary: #716C7A;
-        --accent: #8C6EB7;
-        --accent-muted: #ACA4BC;
-      }
-
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg);
-        color: var(--text-primary);
-        font-family: 'Inter', sans-serif;
-        overflow-x: hidden;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-
-      /* Typography Helpers */
-      .font-display {
-        letter-spacing: -0.04em;
-        line-height: 0.9;
-        font-weight: 700;
-        text-transform: uppercase;
-      }
-      
-      .font-micro {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: 600;
-      }
-
-      /* Smooth Scroll & Utilities */
-      html.lenis {
-        height: auto;
-      }
-      .lenis.lenis-smooth {
-        scroll-behavior: auto;
-      }
-      .lenis.lenis-smooth [data-lenis-prevent] {
-        overscroll-behavior: contain;
-      }
-      .lenis.lenis-stopped {
-        overflow: hidden;
-      }
-      
-      /* Custom Cursor */
-      .cursor-dot,
-      .cursor-outline {
-        position: fixed;
-        top: 0;
-        left: 0;
-        transform: translate(-50%, -50%);
-        border-radius: 50%;
-        z-index: 9999;
-        pointer-events: none;
-      }
-      
-      .cursor-dot {
-        width: 8px;
-        height: 8px;
-        background-color: var(--text-primary);
-      }
-      
-      .cursor-outline {
-        width: 40px;
-        height: 40px;
-        border: 1px solid var(--accent-muted);
-        transition: width 0.2s, height 0.2s, background-color 0.2s;
-      }
-
-      body:hover .cursor-outline.hovered {
-        width: 60px;
-        height: 60px;
-        background-color: rgba(140, 110, 183, 0.1);
-        border-color: var(--accent);
-      }
-      
-      /* Hide scrollbar */
-      ::-webkit-scrollbar {
-        width: 0px;
-        background: transparent;
-      }
-
-      .clip-text-image {
-        background-clip: text;
-        -webkit-background-clip: text;
-      }
-
-      /* Editor Styles */
-      .ProseMirror p { margin-bottom: 0.5em; }
-      .rte-content h2 { font-size: 1.5em; font-weight: bold; margin-bottom: 0.5em; color: #312E35; line-height: 1.1; }
-      .rte-content h3 { font-size: 1.25em; font-weight: 600; margin-bottom: 0.5em; color: #716C7A; }
-      .rte-content b { font-weight: 700; color: #312E35; }
-      .rte-content i { font-style: italic; }
-      .rte-content u { text-decoration: underline; }
-    </style>
-  <script type="importmap">
 {
-  "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "gsap": "https://esm.sh/gsap@^3.14.2",
-    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
-    "gsap/": "https://esm.sh/gsap@^3.14.2/",
-    "framer-motion": "https://esm.sh/framer-motion@^12.34.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
-    "lenis": "https://esm.sh/lenis@^1.3.17",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.95.3",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
+  "name": "felipe-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@google/genai": "*",
+    "@supabase/supabase-js": "^2.39.0",
+    "framer-motion": "^11.0.8",
+    "gsap": "^3.12.5",
+    "lenis": "^1.0.42",
+    "lucide-react": "^0.344.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.18",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
+  },
+  "overrides": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }
-</script>
-</head>
-  <body>
-    <div id="root"></div>
-    <!-- Entry point for Vite build -->
-    <script type="module" src="/index.tsx"></script>
-  </body>
-</html>
