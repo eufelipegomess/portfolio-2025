@@ -589,7 +589,7 @@ const Admin: React.FC<AdminProps> = ({ cases, setCases, testimonials, setTestimo
                          <h3 className="font-micro text-[#716C7A]">Conteúdo Detalhado</h3>
                         <span className="text-xs text-gray-400">{blocks.length} blocos</span>
                     </div>
-                    <Reorder.Group axis="y" values={blocks} onReorder={setBlocks} className="space-y-4">
+                    <Reorder.Group axis="y" values={blocks} onReorder={setBlocks} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {blocks.map((block) => (
                            <ReorderItem 
                                 key={block.id} 
