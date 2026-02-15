@@ -1,26 +1,29 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Helper to safely access environment variables in various environments (Vite, CRA, etc.)
-const getEnvVar = (key: string, fallback: string = ''): string => {
+// Helper to safely access env vars without crashing
+const getEnvVar = (key: string): string => {
   try {
-    // Check Vite (import.meta.env)
-    if (typeof import.meta !== 'undefined' && (import.meta as any).env && (import.meta as any).env[key]) {
-      return (import.meta as any).env[key];
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      const value = import.meta.env[key];
+      // Ensure we only return string
+      return typeof value === 'string' ? value : '';
     }
-  } catch (e) {}
-
-  try {
-    // Check process.env
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-      return process.env[key];
-    }
-  } catch (e) {}
-
-  return fallback;
+  } catch (e) {
+    // ignore
+  }
+  return '';
 };
 
-// ATENÇÃO: Configure suas variáveis de ambiente no arquivo .env
-const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL', 'https://placeholder-project.supabase.co');
-const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY', 'placeholder-key');
+// Provided Credentials
+const FALLBACK_URL = 'https://uoolgmgpfelnfwhokfii.supabase.co';
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvb2xnbWdwZmVsbmZ3aG9rZmlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExMTgyODEsImV4cCI6MjA4NjY5NDI4MX0.ZhYQLc-N-wM1nGcilliFD6yD6mS6xbSwO_VV_zKfEnc';
+
+// Try to get from Env, otherwise use the provided credentials directly
+const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL') || FALLBACK_URL;
+const SUPABASE_ANON_KEY = getEnvVar('VITE_SUPABASE_ANON_KEY') || FALLBACK_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn("Supabase credentials missing!");
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
