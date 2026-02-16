@@ -15,9 +15,23 @@ import PreContactCTA from './components/PreContactCTA';
 
 import { INITIAL_CASES, INITIAL_TESTIMONIALS } from './constants';
 import { CaseStudy, Testimonial } from './types';
-import { loadCasesFromDB, saveCasesToDB, loadTestimonialsFromDB, saveTestimonialsToDB } from './utils/db';
+import { loadCasesFromDB, loadTestimonialsFromDB } from './utils/db';
 import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { getTranslation } from './utils/translations';
+
+// Helper to create URL-friendly slugs
+const createSlug = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+    .replace(/\-\-+/g, "-") // Replace multiple - with single -
+    .replace(/^-+/, "") // Trim - from start
+    .replace(/-+$/, ""); // Trim - from end
+};
 
 // Extract inner component to use Hook
 const AppContent: React.FC = () => {
@@ -38,64 +52,77 @@ const AppContent: React.FC = () => {
   const { language, toggleLanguage } = useLanguage();
   const t = getTranslation(language).nav;
 
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const savedCases = await loadCasesFromDB();
-        const savedTestimonials = await loadTestimonialsFromDB();
-        
-        if (savedCases && savedCases.length > 0) {
-          setCases(savedCases);
-        } else {
-            // Legacy check (optional)
-            try {
-                const legacyData = localStorage.getItem('felipe_portfolio_cases');
-                if (legacyData) {
-                    const parsed = JSON.parse(legacyData);
-                    if (Array.isArray(parsed)) {
-                        setCases(parsed);
-                        localStorage.removeItem('felipe_portfolio_cases');
-                    }
-                }
-            } catch (e) {}
-        }
-
-        if (savedTestimonials && savedTestimonials.length > 0) {
-            setTestimonials(savedTestimonials);
-        }
-
-      } catch (e) {
-        console.error("Failed to load data", e);
-      } finally {
-        setIsLoaded(true);
+  // 1. Initial Load & Refresh Function
+  const loadData = async () => {
+    try {
+      const savedCases = await loadCasesFromDB();
+      const savedTestimonials = await loadTestimonialsFromDB();
+      
+      if (savedCases && savedCases.length > 0) {
+        setCases(savedCases);
+      } 
+      
+      if (savedTestimonials && savedTestimonials.length > 0) {
+          setTestimonials(savedTestimonials);
       }
-    };
+    } catch (e) {
+      console.error("Failed to load data", e);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
 
-    initData();
+  useEffect(() => {
+    loadData();
   }, []);
 
+  // 2. Deep Linking: Open project if URL matches /project/slug
   useEffect(() => {
-    if (!isLoaded) return;
-    const saveData = async () => {
-      try {
-        await saveCasesToDB(cases);
-        await saveTestimonialsToDB(testimonials);
-      } catch (e) {
-        console.error("Failed to save data to DB", e);
-      }
-    };
-    const timeoutId = setTimeout(saveData, 500);
-    return () => clearTimeout(timeoutId);
-  }, [cases, testimonials, isLoaded]);
+    if (isLoaded && cases.length > 0) {
+        const path = window.location.pathname;
+        const match = path.match(/^\/project\/(.+)$/);
+        
+        if (match && match[1]) {
+            const slug = match[1];
+            const foundProject = cases.find(c => createSlug(c.title) === slug);
+            if (foundProject) {
+                setSelectedProject(foundProject);
+            }
+        }
+    }
+  }, [isLoaded, cases]);
 
+  // 3. Handle Browser Back/Forward Buttons
+  useEffect(() => {
+    const handlePopState = () => {
+        const path = window.location.pathname;
+        const match = path.match(/^\/project\/(.+)$/);
+        
+        if (match && match[1]) {
+             const slug = match[1];
+             const foundProject = cases.find(c => createSlug(c.title) === slug);
+             if (foundProject) {
+                 setSelectedProject(foundProject);
+             }
+        } else {
+            // If URL is root or anything else, close modal
+            setSelectedProject(null);
+        }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [cases]);
+
+  // Admin Access Check
   useEffect(() => {
     const path = window.location.pathname;
-    // Check for admin route on load
     if (path === '/admin' || path === '/admin/') {
       setShowLogin(true);
     }
   }, []);
 
+  // Smooth Scroll
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -111,6 +138,7 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  // Custom Cursor
   useEffect(() => {
     const moveCursor = (e: MouseEvent) => {
         const { clientX, clientY } = e;
@@ -133,6 +161,7 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('mousemove', moveCursor);
   }, []);
 
+  // Mobile Menu Animation
   useEffect(() => {
     if (!mobileMenuRef.current) return;
     if (isMobileMenuOpen) {
@@ -165,7 +194,6 @@ const AppContent: React.FC = () => {
         setShowAdmin(true);
         setPasswordInput("");
         setIsMobileMenuOpen(false);
-        // Clear URL without refresh for cleaner look
         window.history.pushState({}, '', '/');
     } else {
         alert("Senha incorreta");
@@ -182,8 +210,23 @@ const AppContent: React.FC = () => {
     }
   };
 
+  // --- NAVIGATION HANDLERS WITH URL SYNC ---
+
+  const handleOpenProject = (project: CaseStudy) => {
+    const slug = createSlug(project.title);
+    // Push new state with URL
+    window.history.pushState({ projectId: project.id }, '', `/project/${slug}`);
+    setSelectedProject(project);
+  };
+
+  const handleCloseProject = () => {
+    // Return to home URL
+    window.history.pushState({}, '', '/');
+    setSelectedProject(null);
+  };
+
   if (!isLoaded) {
-      return <div className="h-screen w-full bg-[#F3EFF9] flex items-center justify-center font-display text-[#312E35]">CARREGANDO...</div>;
+      return <div className="h-screen w-full bg-[#F3EFF9] flex items-center justify-center font-display text-[#312E35]">CARREGANDO DADOS...</div>;
   }
 
   return (
@@ -195,7 +238,8 @@ const AppContent: React.FC = () => {
         className={`fixed top-0 left-0 w-full p-6 md:p-8 flex justify-between items-center z-[200] text-white transition-all duration-300 ${isMobileMenuOpen ? 'mix-blend-normal' : 'mix-blend-difference'}`}
       >
         <div className="relative z-50">
-            <svg className="h-5 md:h-6 w-auto" viewBox="0 0 231 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+             {/* Logo SVG */}
+             <svg className="h-5 md:h-6 w-auto" viewBox="0 0 231 25" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_logo)">
                     <path d="M0 23.6077V0.628919C0 0.498675 0.104195 0.390759 0.238161 0.390759H17.2145C17.3448 0.390759 17.4527 0.494954 17.4527 0.628919V5.04233C17.4527 5.17258 17.3485 5.28049 17.2145 5.28049H6.04333C5.91308 5.28049 5.80517 5.38469 5.80517 5.51865V9.80182C5.80517 9.93207 5.90936 10.04 6.04333 10.04H15.313C15.4432 10.04 15.5511 10.1442 15.5511 10.2781V14.4943C15.5511 14.6246 15.4469 14.7325 15.313 14.7325H6.04333C5.91308 14.7325 5.80517 14.8367 5.80517 14.9707V23.6151C5.80517 23.7454 5.70097 23.8533 5.567 23.8533H0.238161C0.107917 23.8533 0 23.7491 0 23.6151V23.6077Z" fill="currentColor"/>
                     <path d="M19.5291 23.6077V0.628904C19.5291 0.49866 19.6332 0.390743 19.7672 0.390743H37.0711C37.2013 0.390743 37.3092 0.494939 37.3092 0.628904V4.94557C37.3092 5.07581 37.205 5.18373 37.0711 5.18373H25.5724C25.4421 5.18373 25.3342 5.28792 25.3342 5.42189V9.14687C25.3342 9.27711 25.4384 9.38503 25.5724 9.38503H35.3667C35.497 9.38503 35.6049 9.48922 35.6049 9.62319V13.6756C35.6049 13.8059 35.5007 13.9138 35.3667 13.9138H25.5724C25.4421 13.9138 25.3342 14.018 25.3342 14.152V18.6956C25.3342 18.8259 25.4384 18.9338 25.5724 18.9338H37.2683C37.3985 18.9338 37.5065 19.038 37.5065 19.1719V23.6188C37.5065 23.7491 37.4023 23.857 37.2683 23.857H19.7672C19.637 23.857 19.5291 23.7528 19.5291 23.6188V23.6077Z" fill="currentColor"/>
@@ -285,7 +329,7 @@ const AppContent: React.FC = () => {
 
       <main>
         <Hero />
-        <Cases cases={cases} onViewProject={setSelectedProject} />
+        <Cases cases={cases} onViewProject={handleOpenProject} />
         <Feedbacks testimonials={testimonials} />
         <About />
         <div id="processo">
@@ -298,7 +342,7 @@ const AppContent: React.FC = () => {
       {selectedProject && (
         <ProjectDetail 
             project={selectedProject} 
-            onClose={() => setSelectedProject(null)} 
+            onClose={handleCloseProject} 
         />
       )}
 
@@ -309,6 +353,7 @@ const AppContent: React.FC = () => {
             testimonials={testimonials}
             setTestimonials={setTestimonials}
             onClose={() => setShowAdmin(false)} 
+            onUpdate={loadData}
         />
       )}
     </div>
